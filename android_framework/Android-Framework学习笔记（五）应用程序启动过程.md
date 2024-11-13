@@ -8,7 +8,7 @@ packages/apps/Launcher3/src/com/android/launcher3/Launcher.java
 
 **Launcher#startActivitySafely()**
 
-```
+
     public boolean startActivitySafely(View v, Intent intent, Object tag) {
         boolean success = false;
         if (mIsSafeModeEnabled && !Utilities.isSystemApp(this, intent)) {
@@ -24,13 +24,13 @@ packages/apps/Launcher3/src/com/android/launcher3/Launcher.java
         return success;
     }
 
-```
+
 
 注释1调用了startActivity函数。
 
 **Launcher#startActivity()**
 
-```
+
 private boolean startActivity(View v, Intent intent, Object tag) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);//1
         try {
@@ -53,7 +53,7 @@ private boolean startActivity(View v, Intent intent, Object tag) {
         return false;
     }
 
-```
+
 
 注释1处设置Flag为Intent.FLAG_ACTIVITY_NEW_TASK，这样根Activity会在新的任务栈中启动。
 注释2处调用了Activity的startActivity函数。
@@ -62,7 +62,7 @@ frameworks/base/core/java/android/app/Activity.java
 
 **Activity#startActivity()**
 
-```
+
     @Override
     public void startActivity(Intent intent, @Nullable Bundle options) {
         if (options != null) {
@@ -74,13 +74,13 @@ frameworks/base/core/java/android/app/Activity.java
         }
     }
 
-```
+
 
 注释1和2处都会调用startActivityForResult函数，其中第二个参数为-1，表示Launcher不需要知道Activity启动的结果。
 
 **Activity#startActivityForResult**
 
-```
+
     public void startActivityForResult(@RequiresPermission Intent intent, int requestCode, @Nullable Bundle options) {
         if (mParent == null) {
             Instrumentation.ActivityResult ar =
@@ -94,7 +94,7 @@ frameworks/base/core/java/android/app/Activity.java
         }
     }
 
-```
+
 
 mParent是Activity类型的，表示当前Activity的父类。因为目前根Activity还没有创建出来，因此，mParent == null成立。
 注释1调用Instrumentation的execStartActivity方法，Instrumentation主要用来监控应用程序和系统的交互。
@@ -103,7 +103,7 @@ frameworks/base/core/java/android/app/Instrumentation.java
 
 **Instrumentation#execStartActivity()**
 
-```
+
     public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target, Intent intent, int requestCode, Bundle options) {
         ...
         try {
@@ -118,7 +118,7 @@ frameworks/base/core/java/android/app/Instrumentation.java
         return null;
     }
 
-```
+
 
 注释1首先调用ActivityManagerNative的getDefault来获取ActivityManageService（以后简称为AMS)的代理对象，接着调用它的startActivity方法。
 这里ActivityManagerNative.getDefault()涉及到Binder进程间通信机制，下面进行一个简短的介绍，这不是本文的重点。了解过的同学可以略过下面这段Binder简析，不想了解的也可以直接理解为返回的是AMS。实际调用的是AMS#startActivity()。
@@ -129,7 +129,7 @@ frameworks/base/core/java/android/app/ActivityManagerNative.java
 
 **ActivityManagerNative.getDefault()**
 
-```
+
     static public IActivityManager getDefault() {
         return gDefault.get();
     }
@@ -155,7 +155,7 @@ frameworks/base/core/java/android/app/ActivityManagerNative.java
         return new ActivityManagerProxy(obj);
     }
 
-```
+
 
 getDefault方法调用了gDefault的get方法，gDefault 是一个Singleton类。注释1处得到名为”activity”的Service代理对象，也就是AMS的代理对象。
 注释2处将它封装成ActivityManagerProxy（以后简称为AMP）类型对象，并将它保存到gDefault中，此后调用ActivityManagerNative（以后简称为AMN）的getDefault方法就会直接获得AMS的代理AMP对象。
@@ -166,7 +166,7 @@ frameworks/base/core/java/android/app/ActivityManagerNative.java
 
 **ActivityManagerProxy#startActivity()**
 
-```
+
 public int startActivity(IApplicationThread caller, String callingPackage, Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode, int startFlags, ProfilerInfo profilerInfo, Bundle options) throws RemoteException {
         Parcel data = Parcel.obtain();
         Parcel reply = Parcel.obtain();
@@ -199,13 +199,13 @@ public int startActivity(IApplicationThread caller, String callingPackage, Inten
         return result;
     }
 
-```
+
 
 首先会将传入的参数写入到Parcel类型的data中。在注释1处通过IBinder对象mRemote向AMN发送一个START_ACTIVITY_TRANSACTION类型的进程间通信请求。那么服务端AMN就会从Binder线程池中读取我们客户端发来的数据，最终会调用AMN的onTransact方法中执行。
 
 **ActivityManagerNative#onTransact()**
 
-```
+
 @Override
     public boolean onTransact(int code, Parcel data, Parcel reply, int flags) throws RemoteException {
         switch (code) {
@@ -219,19 +219,19 @@ public int startActivity(IApplicationThread caller, String callingPackage, Inten
         }
     } 
 
-```
+
 
 因为AMS继承了AMN，服务端真正的实现是在AMS中，注释1最终会调用AMS的startActivity方法。
 
 **ActivityManagerService#startActivity()**
 
-```
+
     @Override
     public final int startActivity(IApplicationThread caller, String callingPackage, Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode, int startFlags, ProfilerInfo profilerInfo, Bundle bOptions) {
         return startActivityAsUser(caller, callingPackage, intent, resolvedType, resultTo, resultWho, requestCode, startFlags, profilerInfo, bOptions, UserHandle.getCallingUserId()); //1
     }
 
-```
+
 
 AMS中Binder机制暂且分析到这里。
 
@@ -245,7 +245,7 @@ AMS中Binder机制暂且分析到这里。
 
 **ActivityManagerService#startActivityAsUser()**
 
-```
+
     @Override
     public final int startActivityAsUser(IApplicationThread caller, String callingPackage, Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode, int startFlags, ProfilerInfo profilerInfo, Bundle bOptions, int userId) {
         enforceNotIsolatedCaller("startActivity");
@@ -255,7 +255,7 @@ AMS中Binder机制暂且分析到这里。
         return mActivityStarter.startActivityMayWait(caller, -1, callingPackage, intent, resolvedType, null, null, resultTo, resultWho, requestCode, startFlags, profilerInfo, null, null, bOptions, false, userId, null, null);
     }
 
-```
+
 
 注释1处调用了ActivityStarter的startActivityMayWait方法。
 
@@ -263,7 +263,7 @@ frameworks/base/services/core/java/com/android/server/am/ActivityStarter.java
 
 **ActivityStarter#startActivityMayWait()**
 
-```
+
 final int startActivityMayWait(IApplicationThread caller, int callingUid,String callingPackage, Intent intent, String resolvedType,IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,IBinder resultTo, String resultWho, int requestCode, int startFlags,ProfilerInfo profilerInfo, IActivityManager.WaitResult outResult, Configuration config,Bundle bOptions, boolean ignoreTargetSecurity, int userId,IActivityContainer iContainer, TaskRecord inTask) {
        ...
 
@@ -273,13 +273,13 @@ final int startActivityMayWait(IApplicationThread caller, int callingUid,String 
         return err;
     }
 
-```
+
 
 注释1调用了doPendingActivityLaunchesLocked方法。
 
 **ActivityStarter#doPendingActivityLaunchesLocked()**
 
-```
+
     final void doPendingActivityLaunchesLocked(boolean doResume) {
         while (!mPendingActivityLaunches.isEmpty()) {
             final PendingActivityLaunch pal = mPendingActivityLaunches.remove(0);
@@ -295,13 +295,13 @@ final int startActivityMayWait(IApplicationThread caller, int callingUid,String 
         }
     }
 
-```
+
 
 注释1处调用startActivityUnchecked方法。
 
 **ActivityStarter#startActivityUnchecked()**
 
-```
+
  private int startActivityUnchecked(final ActivityRecord r, ActivityRecord sourceRecord,
             IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
             int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask) {
@@ -313,7 +313,7 @@ final int startActivityMayWait(IApplicationThread caller, int callingUid,String 
         return START_SUCCESS;
     }
 
-```
+
 
 注释1处调用了ActivityStackSupervisor的resumeFocusedStackTopActivityLocked方法。
 
@@ -321,7 +321,7 @@ frameworks/base/services/core/java/com/android/server/am/ActivityStackSupervisor
 
 **ActivityStackSupervisor#resumeFocusedStackTopActivityLocked()**
 
-```
+
     boolean resumeFocusedStackTopActivityLocked( ActivityStack targetStack, ActivityRecord target, ActivityOptions targetOptions) {
         if (targetStack != null && isFocusedStack(targetStack)) {
             return targetStack.resumeTopActivityUncheckedLocked(target, targetOptions); //1
@@ -333,7 +333,7 @@ frameworks/base/services/core/java/com/android/server/am/ActivityStackSupervisor
         return false;
     }
 
-```
+
 
 注释1处调用了ActivityStack的resumeTopActivityUncheckedLocked方法。
 
@@ -341,7 +341,7 @@ frameworks/base/services/core/java/com/android/server/am/ActivityStack.java
 
 **ActivityStack#resumeTopActivityUncheckedLocked()**
 
-```
+
     boolean resumeTopActivityUncheckedLocked(ActivityRecord prev, ActivityOptions options) {
         ...
         boolean result = false;
@@ -359,13 +359,13 @@ frameworks/base/services/core/java/com/android/server/am/ActivityStack.java
         return result;
     }
 
-```
+
 
 注释1处调用resumeTopActivityInnerLocked函数。
 
 **ActivityStack#resumeTopActivityInnerLocked()**
 
-```
+
  private boolean resumeTopActivityInnerLocked(ActivityRecord prev, ActivityOptions options) {
         ...
         // If the top activity is the resumed one, nothing to do.
@@ -384,7 +384,7 @@ frameworks/base/services/core/java/com/android/server/am/ActivityStack.java
             if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
        ...
 
-```
+
 
 这个方法里面的内容很多。
 注释1主要作用是将mResumedActivity暂停(Launcher任务栈的TopActivity)，即进入onPause状态。
@@ -394,7 +394,7 @@ frameworks/base/services/core/java/com/android/server/am/ActivityStackSupervisor
 
 **ActivityStackSupervisor#startSpecificActivityLocked()**
 
-```
+
 void startSpecificActivityLocked(ActivityRecord r, boolean andResume, boolean checkConfig) {
         //1
         ProcessRecord app = mService.getProcessRecordLocked(r.processName, r.info.applicationInfo.uid, true);
@@ -414,11 +414,11 @@ void startSpecificActivityLocked(ActivityRecord r, boolean andResume, boolean ch
         mService.startProcessLocked(r.processName, r.info.applicationInfo, true, 0, "activity", r.intent.getComponent(), false, false, true);
     }
 
-```
+
 
 **ActivityStackSupervisor#getProcessRecordLocked()**
 
-```
+
     final ProcessRecord getProcessRecordLocked(String processName, int uid, boolean keepIfLarge) {
         if (uid == Process.SYSTEM_UID) {
             // The system gets to run in any process.  If there are multiple
@@ -431,7 +431,7 @@ void startSpecificActivityLocked(ActivityRecord r, boolean andResume, boolean ch
         ...
     }
 
-```
+
 
 注释1处获取当前Activity所在的进程的ProcessRecord，如果进程已经启动了，会执行注释2处的代码。否则执行注释3的代码。
 注释2处调用realStartActivityLocked来启动应用程序。
@@ -439,7 +439,7 @@ void startSpecificActivityLocked(ActivityRecord r, boolean andResume, boolean ch
 
 **ActivityStackSupervisor#realStartActivityLocked()**
 
-```
+
 final boolean realStartActivityLocked(ActivityRecord r, ProcessRecord app, boolean andResume, boolean checkConfig) throws RemoteException {
      ...
             //1    
@@ -450,7 +450,7 @@ final boolean realStartActivityLocked(ActivityRecord r, ProcessRecord app, boole
         return true;
     }
 
-```
+
 
 这里的app.thread指的是IApplicationThread，它的实现是ActivityThread的内部类ApplicationThread，其中ApplicationThread继承了ApplicationThreadNative，而ApplicationThreadNative继承了Binder并实现了IApplicationThread接口。
 
@@ -466,7 +466,7 @@ frameworks/base/core/java/android/app/ActivityThread.java
 
 **ApplicationThread#scheduleLaunchActivity()**
 
-```
+
         @Override
         public final void scheduleLaunchActivity(Intent intent, IBinder token, int ident,ActivityInfo info, Configuration curConfig, Configuration overrideConfig,
 CompatibilityInfo compatInfo, String referrer, IVoiceInteractor voiceInteractor,
@@ -500,14 +500,14 @@ int procState, Bundle state, PersistableBundle persistentState,List<ResultInfo> 
             sendMessage(H.LAUNCH_ACTIVITY, r); //1
         }
 
-```
+
 
 会将启动Activity的参数封装成ActivityClientRecord。
 注释1处sendMessage方法向H类发送类型为LAUNCH_ACTIVITY的消息，并将ActivityClientRecord 传递过去。
 
 **ApplicationThread#sendMessage()**
 
-```
+
     private void sendMessage(int what, Object obj) {
         sendMessage(what, obj, 0, 0, false);
     }
@@ -527,13 +527,12 @@ int procState, Bundle state, PersistableBundle persistentState,List<ResultInfo> 
         mH.sendMessage(msg);
     }
 
-```
+
 
 这里mH指的是H，它是ActivityThread的内部类并继承Handler。
 
 **ActivityThread.H**
 
-```
  private class H extends Handler {
         public static final int LAUNCH_ACTIVITY         = 100;
         public static final int PAUSE_ACTIVITY          = 101;
@@ -553,7 +552,6 @@ int procState, Bundle state, PersistableBundle persistentState,List<ResultInfo> 
               ...
   }     
 
-```
 
 查看H的handleMessage方法中对LAUNCH_ACTIVITY的处理。
 注释1处将传过来的msg的成员变量obj转换为ActivityClientRecord。
@@ -562,7 +560,7 @@ int procState, Bundle state, PersistableBundle persistentState,List<ResultInfo> 
 
 **ActivityThread#handleLaunchActivity()**
 
-```
+
   private void handleLaunchActivity(ActivityClientRecord r, Intent customIntent, String reason) {
       ...
         Activity a = performLaunchActivity(r, customIntent); //1
@@ -590,7 +588,7 @@ int procState, Bundle state, PersistableBundle persistentState,List<ResultInfo> 
         }
     }
 
-```
+
 
 注释1处的performLaunchActivity方法用来启动Activity。
 注释2处的代码用来执行Activity的onResume方法，将Activity的状态置为Resume。
@@ -598,7 +596,7 @@ int procState, Bundle state, PersistableBundle persistentState,List<ResultInfo> 
 
 **ActivityThread#performLaunchActivity()**
 
-```
+
 private Activity performLaunchActivity(ActivityClientRecord r, Intent customIntent) {
   ...
         ActivityInfo aInfo = r.activityInfo; //1
@@ -643,7 +641,7 @@ private Activity performLaunchActivity(ActivityClientRecord r, Intent customInte
         return activity;
 }        
 
-```
+
 
 注释1处用来获取ActivityInfo。
 注释2处获取APK文件的描述类LoadedApk。
@@ -661,7 +659,7 @@ frameworks/base/core/java/android/app/LoadedApk.java
 
 **LoadedApk#makeApplication()**
 
-```
+
 public Application makeApplication(boolean forceDefaultAppClass,
             Instrumentation instrumentation) {
         if (mApplication != null) {  //1
@@ -689,7 +687,7 @@ public Application makeApplication(boolean forceDefaultAppClass,
         return app;
     }
 
-```
+
 
 注释1判断当前应用是否是第一次创建Application对象，如果不是则直接返回Application对象，否则执行注释2创建第一个Application对象。目的是确保当前应用之创建了一个全局的Application对象。
 注释2调用Instrumentation的newApplication()方法创建Application。
@@ -699,7 +697,7 @@ frameworks/base/core/java/android/app/Instrumentation.java
 
 **Instrumentation#newApplication()**
 
-```
+
 public Application newApplication(ClassLoader cl, String className, Context context)
             throws InstantiationException, IllegalAccessException, 
             ClassNotFoundException {
@@ -714,19 +712,19 @@ public Application newApplication(ClassLoader cl, String className, Context cont
         return app;
     }
 
-```
+
 
 注释1简单粗暴，通过反射创建一个Application实例。
 注释2处调用Application的attach方法初始化Application，将ContextImpl对象注册到对应的Application中，之后在Application类中就可以使用Context的所有功能了。
 
 **Instrumentation#callApplicationOnCreate()**
 
-```
+
     public void callApplicationOnCreate(Application app) {
         app.onCreate();
     }
 
-```
+
 
 这样Application的onCreate()方法也得到执行。
 
@@ -734,14 +732,14 @@ public Application newApplication(ClassLoader cl, String className, Context cont
 
 **Instrumentation#callActivityOnCreate()**
 
-```
+
    public void callActivityOnCreate(Activity activity, Bundle icicle) {
         prePerformCreate(activity);
         activity.performCreate(icicle); //1
         postPerformCreate(activity);
     }
 
-```
+
 
 注释1会调用Activity的performCreate方法。
 
@@ -749,7 +747,7 @@ frameworks/base/core/java/android/app/Activity.java
 
 **Activity#performCreate()**
 
-```
+
   final void performCreate(Bundle icicle) {
         restoreHasCurrentPermissionRequest(icicle);
         onCreate(icicle); //1
@@ -757,7 +755,7 @@ frameworks/base/core/java/android/app/Activity.java
         performCreateCommon();
     }
 
-```
+
 
 注释1会调用Activity的onCreate方法，这样Activity就启动了，即应用程序就启动了。
 
