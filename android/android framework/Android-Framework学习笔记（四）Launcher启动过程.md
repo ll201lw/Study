@@ -11,7 +11,7 @@ Android系统默认第一个启动的应用程序是Home应用程序，这个应
 frameworks/base/services/java/com/android/server/SystemServer.java
 
 SystemServer#startOtherService()
-boolean hasLifecycleMethods = ClassesInfoCache.sInstance.hasLifecycleMethods(klass);
+
 ```
  private void startOtherServices() {
   ...
